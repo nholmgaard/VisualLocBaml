@@ -49,14 +49,14 @@ namespace MainProject.UI.DocumentPages
     /// </summary>
     public partial class pp_GenerateAssemblies : Page
     {
-        private string __OutpuFolder;
+        private string __OutputFolder;
         private ObservableCollection<CultureItem> __Cultures;
         private ObservableCollection<AssemblyItem> __Assemblies;
         private bool __ExportAllStrings;
 
         public pp_GenerateAssemblies()
         {
-            __OutpuFolder = "";
+            __OutputFolder = "";
 
             InitializeComponent();
             DataContext = this;
@@ -84,12 +84,12 @@ namespace MainProject.UI.DocumentPages
         {
             get
             {
-                return __OutpuFolder;
+                return __OutputFolder;
             }
 
             set
             {
-                __OutpuFolder = value;
+                __OutputFolder = value;
                 
             }
         }
@@ -277,9 +277,17 @@ namespace MainProject.UI.DocumentPages
 
                         await Task.Run(() =>
                         {
+                            string sourceFullPath;
                             List<BamlString> translatedStrings = document.ExportApi.GetTranslatedStrings(
                                 assemblyItem.Assembly.Assembly.AssemblyFile, cultureItem.Culture.CultureCode);
                             loadedAssembly.GenerateSatteliteAssembly(cultureItem.Culture.CultureCode, translatedStrings, satteliteTargetFullPath);
+
+                            // NIHO: Directly generate into source directory as well - save a manual copy step
+                            if (satteliteTargetFullPath.Contains("Build_App"))
+                            {
+                                sourceFullPath = satteliteTargetFullPath.Replace("Build_App", "Source_App").Replace("IHFood.PigSpineCutMeasurer_x86_Debug", System.IO.Path.Combine("IHFood.PigSpineCutMeasurer", "Localization"));
+                                loadedAssembly.GenerateSatteliteAssembly(cultureItem.Culture.CultureCode, translatedStrings, sourceFullPath);
+                            }
                         });
 
                         result.ResultMessage = StringUtils.String("AssemblyResult_Created");
